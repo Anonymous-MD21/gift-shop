@@ -2,51 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gift Shop</title>
+    <title>Payment Trigger</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            font-family: sans-serif;
-            color: var(--tg-theme-text-color);
-            background-color: var(--tg-theme-bg-color);
-            text-align: center;
-            padding-top: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
-    <h1>به فروشگاه گیفت خوش آمدید!</h1>
-    <p>این یک مینی اپ آزمایشی است.</p>
-    <button id="testButton">اطلاعات من</button>
-
-    <div id="userInfo"></div>
+    در حال انتقال به صفحه پرداخت...
 
     <script>
-        // این خط به تلگرام اطلاع می‌دهد که برنامه شما آماده است
-        Telegram.WebApp.ready();
+        // به محض بارگذاری صفحه، این اسکریپت اجرا می‌شود
+        window.onload = function() {
+            Telegram.WebApp.ready();
 
-        const testButton = document.getElementById('testButton');
-        const userInfoDiv = document.getElementById('userInfo');
+            // 1. پارامترهای URL را می‌خوانیم
+            const urlParams = new URLSearchParams(window.location.search);
+            const invoiceUrl = urlParams.get('invoice_url');
 
-        testButton.addEventListener('click', () => {
-            // بررسی می‌کنیم که آیا اطلاعات کاربر در دسترس است یا خیر
-            if (Telegram.WebApp.initDataUnsafe.user) {
-                const user = Telegram.WebApp.initDataUnsafe.user;
-                userInfoDiv.innerHTML = `<p>سلام ${user.first_name}!<br>ID شما: ${user.id}</p>`;
+            if (invoiceUrl) {
+                // 2. اگر لینک پرداخت وجود داشت، بلافاصله آن را باز می‌کنیم
+                Telegram.WebApp.openInvoice(invoiceUrl, function(status) {
+                    // این تابع callback پس از بسته شدن پنجره پرداخت اجرا می‌شود
+                    if (status === 'paid') {
+                        // اگر پرداخت موفق بود، می‌توانیم مینی اپ را ببندیم
+                        Telegram.WebApp.close();
+                    } else {
+                        // اگر کاربر پنجره را بست یا پرداخت ناموفق بود
+                        console.log('Invoice was not paid. Status:', status);
+                    }
+                });
             } else {
-                userInfoDiv.innerHTML = '<p>اطلاعات کاربر در دسترس نیست.</p>';
+                // در صورتی که لینک وجود نداشت، یک پیغام خطا نمایش داده و اپ را می‌بندیم
+                Telegram.WebApp.showAlert('خطا: لینک پرداخت یافت نشد.');
+                Telegram.WebApp.close();
             }
-        });
+        };
     </script>
 </body>
 </html>
